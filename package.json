@@ -1,0 +1,34 @@
+{
+  "name": "fs-sink",
+  "version": "0.0.0",
+  "description": "A file system sink for the BOB streaming protocol.",
+  "main": "index.js",
+  "scripts": {
+    "test": "node ./test/test-basic.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Fishrock123/fs-sink.git"
+  },
+  "keywords": [
+    "BOB",
+    "bob",
+    "streams",
+    "stream",
+    "pull",
+    "fs",
+    "sink",
+    "file",
+    "file system"
+  ],
+  "author": "Jeremiah Senkpiel <fishrock123@rocketmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Fishrock123/fs-sink/issues"
+  },
+  "homepage": "https://github.com/Fishrock123/bob",
+  "dependencies": {
+    "bob-status": "0.0.0",
+    "fs-source": "0.0.0"
+  }
+}
