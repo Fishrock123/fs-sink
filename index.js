@@ -1,77 +1,62 @@
 'use strict'
 
-// Flags: --expose-internals
-
-// const errors = require('internal/errors');
-// const internalURL = require('internal/url');
-// const  { assertEncoding } = require('internal/fs/utils')
-// const getPathFromURL = internalURL.getPathFromURL;
 const fs = require('fs')
 const status_type = require('bob-status')
-
-const kMinPoolSpace = 128;
 
 module.exports = FileSink
 
 function FileSink(path, options) {
-  if (!(this instanceof FileSink))
-    return new FileSink(path, options);
+  if (!(this instanceof FileSink)) {
+    return new FileSink(path, options)
+  }
 
-  options = copyObject(getOptions(options, {}));
+  if (options !== undefined && typeof options !== 'object') {
+    throw new TypeError(`options MUST be an Object, found ${typeof options}`)
+  }
 
-  handleError((this.path = path /*getPathFromURL(path)*/));
-  this.fd = options.fd === undefined ? null : options.fd;
-  this.flags = options.flags === undefined ? 'w' : options.flags;
-  this.mode = options.mode === undefined ? 0o666 : options.mode;
+  options = copyObject(options)
 
-  this.start = options.start;
-  this.autoClose = options.autoClose === undefined ? true : !!options.autoClose;
-  this.pos = undefined;
-  this.bytesWritten = 0;
+  if (path !== undefined && typeof path !== 'string') {
+    throw new TypeError(`path MUST be a String, found ${typeof options}`)
+  }
+
+  this.path = path
+
+  this.fd = options.fd === undefined ? null : options.fd
+  this.flags = options.flags === undefined ? 'w' : options.flags
+  this.mode = options.mode === undefined ? 0o666 : options.mode
+
+  this.start = options.start
   this.buffer = null
 
   if (this.start !== undefined) {
     if (typeof this.start !== 'number') {
       throw new TypeError(`options.start MUST be a Number, found ${typeof this.start}`)
-      // throw new errors.TypeError('ERR_INVALID_ARG_TYPE',
-      //                            'start',
-      //                            'number',
-      //                            this.start);
     }
     if (this.start < 0) {
-      const errVal = `{start: ${this.start}}`;
+      const errVal = `{start: ${this.start}}`
       throw new RangeError(`start must be >= 0, found ${errVal}`)
-      // throw new errors.RangeError('ERR_VALUE_OUT_OF_RANGE',
-      //                             'start',
-      //                             '>= 0',
-      //                             errVal);
     }
 
-    this.pos = this.start;
+    this.pos = this.start
   } else {
-    this.pos = 0;
+    this.pos = 0
   }
 
-  if (options.encoding)
-    this.encoding = checkEncoding(options.encoding);
-  else
-    this.encoding = 'utf8'
-
-  // if (typeof this.fd !== 'number')
-  //   this.open();
+  // XXX(Fishrock123):
+  // streams3 opens the FD here, but I think error handling might be better if
+  // it is opened during pull flow.
   //
-  // // dispose on finish.
-  // this.once('finish', function() {
-  //   if (this.autoClose) {
-  //     this.destroy();
-  //   }
-  // });
-};
+  // That has some disadvantages, namely around telling when to actually open
+  // the file, but also the delayment of error until after stream construction.
+  //
+  // if (typeof this.fd !== 'number')
+  //   this.open()
+}
 
 FileSink.prototype.bindSource = function bindSource (source, bindCb) {
   if (typeof bindCb !== 'function') {
-    throw new TypeError(`bindCb must be a function, found ${typeof this.start}`)
-    // throw new errors.TypeError('ERR_INVALID_CALLBACK')
+    throw new TypeError(`bindCb must be a function, found ${typeof bindCb}`)
   }
 
   source.bindSink(this)
@@ -79,35 +64,32 @@ FileSink.prototype.bindSource = function bindSource (source, bindCb) {
   this.source = source
   this.bindCb = bindCb
 
-  this.sink()
+  this.begin()
 }
 
-
-FileSink.prototype.sink = function () {
+FileSink.prototype.begin = function begin () {
   if (typeof this.fd !== 'number') {
     fs.open(this.path, this.flags, this.mode, (error, fd) => {
       if (error) {
-        this.source.pull(error, Buffer.alloc(0))
+        return this.source.pull(error, Buffer.alloc(0))
       }
 
       this.fd = fd
-
-      this._read()
     })
-  } else {
-    this._read()
   }
+
+  this.doPull()
 }
 
-FileSink.prototype._read = function _read () {
-  if (Buffer.isBuffer(this.buffer))
-    return this.source.pull(null, this.buffer)
-
-  try {
-    this.buffer = Buffer.allocUnsafe(64 * 1024)
-  } catch (error) {
-    return this.bindCb(error)
+FileSink.prototype.doPull = function doPull () {
+  if (!Buffer.isBuffer(this.buffer)) {
+    try {
+      this.buffer = Buffer.allocUnsafe(64 * 1024)
+    } catch (error) {
+      return this.bindCb(error)
+    }
   }
+
   this.source.pull(null, this.buffer)
 }
 
@@ -125,6 +107,7 @@ FileSink.prototype.next = function next (status, error, _buf, bytes) {
       this.bindCb()
     })
   }
+
   if (error) {
     return fs.close(this.fd, (closeError) => {
       if (closeError) {
@@ -145,72 +128,20 @@ FileSink.prototype.next = function next (status, error, _buf, bytes) {
       this.source.pull(error, Buffer.alloc(0))
     } else {
       if (bytesWritten > 0) {
-        this.pos += bytesWritten;
+        this.pos += bytesWritten
       }
       // else ...? What happens if nothing is written?
 
-      this._read()
+      this.doPull()
     }
-  });
-};
+  })
+}
 
 /* ## Helpers ## */
 
-// function closeFsStream(stream, cb, err) {
-//   fs.close(stream.fd, (er) => {
-//     er = er || err;
-//     cb(er);
-//     if (!er)
-//       stream.emit('close');
-//   });
-// }
-
-function handleError(val, callback) {
-  if (val instanceof Error) {
-    if (typeof callback === 'function') {
-      process.nextTick(callback, val);
-      return true;
-    } else throw val;
-  }
-  return false;
-}
-
-function getOptions(options, defaultOptions) {
-  if (options === null || options === undefined ||
-      typeof options === 'function') {
-    return defaultOptions;
-  }
-
-  if (typeof options === 'string') {
-    defaultOptions = util._extend({}, defaultOptions);
-    defaultOptions.encoding = options;
-    options = defaultOptions;
-  } else if (typeof options !== 'object') {
-    throw new TypeError(`options MUST be an Object, found ${typeof options}`)
-    // throw new errors.TypeError('ERR_INVALID_ARG_TYPE',
-    //                            'options',
-    //                            ['string', 'object'],
-    //                            options);
-  }
-
-  if (options.encoding !== 'buffer')
-    assertEncoding(options.encoding);
-  return options;
-}
-
 function copyObject(source) {
-  var target = {};
+  var target = {}
   for (var key in source)
-    target[key] = source[key];
-  return target;
-}
-
-function checkEncoding(encoding) {
-  // node::ParseEncoding() requires lower case.
-  if (typeof encoding === 'string')
-    encoding = encoding.toLowerCase();
-  // if (!Buffer.isEncoding(encoding))
-    // throw new errors.TypeError('ERR_UNKNOWN_ENCODING', encoding);
-
-  return encoding
+    target[key] = source[key]
+  return target
 }
