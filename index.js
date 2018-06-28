@@ -26,19 +26,18 @@ function FileSink(path, options) {
   this.flags = options.flags === undefined ? 'w' : options.flags
   this.mode = options.mode === undefined ? 0o666 : options.mode
 
-  this.start = options.start
   this.buffer = null
 
-  if (this.start !== undefined) {
-    if (typeof this.start !== 'number') {
-      throw new TypeError(`options.start MUST be a Number, found ${typeof this.start}`)
+  if (options.start !== undefined) {
+    if (typeof options.start !== 'number') {
+      throw new TypeError(`options.start MUST be a Number, found ${typeof options.start}`)
     }
-    if (this.start < 0) {
-      const errVal = `{start: ${this.start}}`
+    if (options.start < 0) {
+      const errVal = `{start: ${options.start}}`
       throw new RangeError(`start must be >= 0, found ${errVal}`)
     }
 
-    this.pos = this.start
+    this.pos = options.start
   } else {
     this.pos = 0
   }
