@@ -1,6 +1,6 @@
 {
   "name": "fs-sink",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "A file system sink for the BOB streaming protocol.",
   "main": "index.js",
   "scripts": {
