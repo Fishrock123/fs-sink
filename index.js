@@ -74,10 +74,12 @@ FileSink.prototype.begin = function begin () {
       }
 
       this.fd = fd
-    })
-  }
 
-  this.doPull()
+      this.doPull()
+    })
+  } else {
+    this.doPull()
+  }
 }
 
 FileSink.prototype.doPull = function doPull () {
