@@ -28,7 +28,9 @@
   },
   "homepage": "https://github.com/Fishrock123/bob",
   "dependencies": {
-    "bob-status": "0.0.0",
+    "bob-status": "0.0.0"
+  },
+  "devDependencies": {
     "fs-source": "0.0.0"
   }
 }
