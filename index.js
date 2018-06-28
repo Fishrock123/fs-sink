@@ -17,7 +17,7 @@ function FileSink(path, options) {
   options = copyObject(options)
 
   if (path !== undefined && typeof path !== 'string') {
-    throw new TypeError(`path MUST be a String, found ${typeof options}`)
+    throw new TypeError(`path MUST be a String, found ${typeof path}`)
   }
 
   this.path = path
