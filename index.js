@@ -1,7 +1,7 @@
 'use strict'
 
 const fs = require('fs')
-const status_type = require('bob-status')
+const status = require('bob-status')
 
 module.exports = FileSink
 
@@ -94,13 +94,13 @@ FileSink.prototype.doPull = function doPull () {
   this.source.pull(null, this.buffer)
 }
 
-FileSink.prototype.next = function next (status, error, _buf, bytes) {
-  if (status === undefined) {
+FileSink.prototype.next = function next (source_status, error, _buf, bytes) {
+  if (source_status === undefined) {
     this.source.pull(new Error('undefined status'), Buffer.alloc(0))
     return
   }
 
-  if (status === status_type.end) {
+  if (source_status === status.end) {
     return fs.close(this.fd, (closeError) => {
       if (closeError) {
         this.source.pull(closeError, Buffer.alloc(0))
