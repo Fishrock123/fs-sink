@@ -4,16 +4,16 @@ A file system sink for the [BOB](https://github.com/Fishrock123/bob) streaming p
 
 ## Usage
 
-```
+```js
 const FileSink = require('fs-sink')
 new FileSink(path, options)
 ```
 
-Implements a [BOB sink](https://github.com/Fishrock123/bob/blob/master/reference-sink.js) from files.
+Implements a [BOB sink](https://github.com/Fishrock123/bob/blob/master/reference-sink.js) to a file.
 
 ### Example
 
-```
+```js
 const FileSink = require('fs-source')
 
 const source = new MyBOBSink()
