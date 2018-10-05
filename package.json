@@ -31,6 +31,6 @@
     "bob-status": "0.0.0"
   },
   "devDependencies": {
-    "fs-source": "0.0.2"
+    "fs-source": "0.0.3"
   }
 }
