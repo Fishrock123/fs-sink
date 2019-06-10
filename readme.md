@@ -19,7 +19,8 @@ const FileSink = require('fs-source')
 const source = new MyBOBSink()
 const sink = new FileSink('my-file')
 
-sink.bindSource(source, error => {
+sink.bindSource(source)
+sink.start(error => {
   if (error)
     console.error('Stream returned error ->', error.stack)
   else {

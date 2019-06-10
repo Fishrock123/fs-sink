@@ -5,6 +5,9 @@ const status = require('bob-status')
 
 class FileSink {
   constructor (path, options) {
+    this.source = null
+    this.exitCb = null
+
     if (options !== undefined && typeof options !== 'object') {
       throw new TypeError(`options MUST be an Object, found ${typeof options}`)
     }
@@ -48,17 +51,10 @@ class FileSink {
     //   this.open()
   }
 
-  bindSource (source, bindCb) {
-    if (typeof bindCb !== 'function') {
-      throw new TypeError(`bindCb must be a function, found ${typeof bindCb}`)
-    }
-
+  bindSource (source) {
     source.bindSink(this)
 
     this.source = source
-    this.bindCb = bindCb
-
-    this.begin()
   }
 
   next (source_status, error, _buf, bytes) {
@@ -72,7 +68,7 @@ class FileSink {
         if (closeError) {
           this.source.pull(closeError, Buffer.alloc(0))
         }
-        this.bindCb()
+        this.exitCb()
       })
     }
 
@@ -81,12 +77,12 @@ class FileSink {
         if (closeError) {
           this.source.pull(closeError, Buffer.alloc(0))
         }
-        this.bindCb(error)
+        this.exitCb(error)
       })
     }
 
     if (typeof this.fd !== 'number') {
-      return this.bindCb(new Error('FD is not a number'))
+      return this.exitCb(new Error('FD is not a number'))
     }
 
     const buf = Buffer.isBuffer(_buf) ? _buf : bytes === this.buffer.length ? this.buffer : this.buffer.slice(0, bytes)
@@ -105,7 +101,12 @@ class FileSink {
     })
   }
 
-  begin () {
+  start (exitCb) {
+    if (typeof exitCb !== 'function') {
+      throw new TypeError(`exitCb must be a function, found ${typeof exitCb}`)
+    }
+    this.exitCb = exitCb
+
     if (typeof this.fd !== 'number') {
       fs.open(this.path, this.flags, this.mode, (error, fd) => {
         if (error) {
@@ -126,7 +127,7 @@ class FileSink {
       try {
         this.buffer = Buffer.allocUnsafe(64 * 1024)
       } catch (error) {
-        return this.bindCb(error)
+        return this.exitCb(error)
       }
     }
 

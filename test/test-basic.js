@@ -9,7 +9,8 @@ const FileSink = require('../index.js')
 const fileSource = new FileSource('./test/fixtures/file')
 const fileSink = new FileSink('./test/tmp/file')
 
-fileSink.bindSource(fileSource, error => {
+fileSink.bindSource(fileSource)
+fileSink.start(error => {
   if (error)
     console.error('Stream returned ->', error.stack)
   else {
