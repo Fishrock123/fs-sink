@@ -55,6 +55,8 @@ class FileSink {
     source.bindSink(this)
 
     this.source = source
+
+    return this
   }
 
   next (source_status, error, _buf, bytes) {
