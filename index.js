@@ -65,15 +65,6 @@ class FileSink {
       return
     }
 
-    if (source_status === status.end) {
-      return fs.close(this.fd, (closeError) => {
-        if (closeError) {
-          this.source.pull(closeError, Buffer.alloc(0))
-        }
-        this.exitCb()
-      })
-    }
-
     if (error) {
       return fs.close(this.fd, (closeError) => {
         if (closeError) {
@@ -98,7 +89,16 @@ class FileSink {
         }
         // else ...? What happens if nothing is written?
 
-        this.doPull()
+        if (source_status === status.end) {
+          return fs.close(this.fd, (closeError) => {
+            if (closeError) {
+              this.source.pull(closeError, Buffer.alloc(0))
+            }
+            this.exitCb()
+          })
+        } else if (source_status === status.continue) {
+          this.doPull()
+        }
       }
     })
   }
