@@ -1,5 +1,7 @@
 'use strict'
 
+/* eslint-disable camelcase */
+
 const fs = require('fs')
 const status = require('bob-status')
 
@@ -141,9 +143,10 @@ module.exports = FileSink
 
 /* ## Helpers ## */
 
-function copyObject(source) {
+function copyObject (source) {
   var target = {}
-  for (var key in source)
+  for (var key in source) {
     target[key] = source[key]
+  }
   return target
 }
